@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clock In dengan Lokasi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    #map {
+      height: 300px;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    input, button {
+      padding: 10px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h2>Clock In Kehadiran</h2>
+  <form id="clockForm">
+    <input type="text" id="name" placeholder="Nama Penuh" required>
+    <input type="text" id="position" placeholder="Jawatan" required>
+    <div id="map"></div>
+    <button type="submit">Clock In</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script>
+    let lat = "", lng = "";
+
+    function initMap() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          lat = position.coords.latitude;
+          lng = position.coords.longitude;
+          const map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: lat, lng: lng },
+            zoom: 16
+          });
+          new google.maps.Marker({ position: { lat: lat, lng: lng }, map: map });
+        }, function() {
+          document.getElementById('status').innerText = "Gagal mendapatkan lokasi anda.";
+        });
+      }
+    }
+
+    document.getElementById("clockForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const position = document.getElementById("position").value;
+      const timestamp = new Date().toLocaleString();
+
+      fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec", {
+        method: "POST",
+        body: JSON.stringify({ name, position, lat, lng, timestamp }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById("status").innerText = "Kehadiran direkodkan. Terima kasih!";
+        document.getElementById("clockForm").reset();
+      })
+      .catch(err => {
+        document.getElementById("status").innerText = "Ralat semasa hantar data.";
+      });
+    });
+  </script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap">
+  </script>
+</body>
+</html>
